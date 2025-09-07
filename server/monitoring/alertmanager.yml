@@ -1,0 +1,20 @@
+global:
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+route:
+  receiver: 'slack-pagerduty'
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+
+receivers:
+- name: 'slack-pagerduty'
+  slack_configs:
+  - channel: '#payments-alerts'
+    text: '🚨 *{{ .CommonLabels.severity }} Alert*\n{{ .CommonAnnotations.description }}'
+  pagerduty_configs:
+  - routing_key: <PAGERDUTY_INTEGRATION_KEY>
+    description: '{{ .CommonAnnotations.summary }}'
+    severity: '{{ .CommonLabels.severity }}'

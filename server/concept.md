@@ -893,3 +893,337 @@ Shall we begin?
 > 💡 Pro Tip: Start with Wallet + Auth — get those 100% bulletproof before touching payments.
 
 Ready when you are. 🦀🔒
+
+
+
+runing tets
+# Unit tests
+cargo test --test unit -- --test-threads=1
+
+# Integration tests
+DATABASE_URL_TEST=postgres://localhost/payment_system_test \
+REDIS_URL=redis://127.0.0.1:6379 \
+JWT_SECRET=jwt_secret \
+OTP_SECRET=otp_secret \
+cargo test --test integration -- --test-threads=1
+
+# Security tests
+cargo test --test security
+
+# All tests
+cargo test -- --test-threads=1
+
+
+run benchmarl:
+cargo bench
+
+
+🚀 RUN ALL TESTS LOCALLY
+# Start test DB and Redis
+docker run -d -p 5432:5432 -e POSTGRES_DB=payment_system_test -e POSTGRES_PASSWORD=postgres postgres:14
+docker run -d -p 6379:6379 redis:7
+
+# Run migrations
+psql -h localhost -U postgres -d payment_system_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+psql -h localhost -U postgres -d payment_system_test -f migrations/001_*.sql
+
+# Run all tests
+DATABASE_URL_TEST=postgres://postgres:postgres@localhost:5432/payment_system_test \
+REDIS_URL=redis://localhost:6379 \
+JWT_SECRET=jwt_secret_32_chars_min \
+OTP_SECRET=otp_secret_16_chars_min \
+cargo test -- --test-threads=1
+
+# Run benchmarks
+cargo bench
+
+Absolutely — let’s take your payment system to maximum robustness by adding:
+
+✅ Mutation Testing with cargo-mutants — find untested code paths
+✅ Security Scanning — cargo-audit, trivy, cargo-deny
+✅ Distributed Tracing Tests — ensure traces propagate correctly
+✅ Canary Deployment Strategy — safe production rollouts
+✅ Blue-Green Deployment Tests — zero-downtime deployments
+
+
+
+🧬 STEP 1: MUTATION TESTING WITH cargo-mutants
+Mutation testing modifies your code (mutants) and checks if tests fail — if they don’t, you have untested code.
+cargo install cargo-mutants
+
+➤ 1.2 Run Mutation Tests
+# Run on wallet service (most critical)
+cargo mutants --package payment_system --path src/wallet -- --test-threads=1
+
+# Run on payment service
+cargo mutants --package payment_system --path src/payment -- --test-threads=1
+
+
+🛡️ STEP 2: SECURITY SCANNING
+# Install
+➤ 2.1 Cargo Audit (Rust Dependencies)
+
+cargo install cargo-audit
+
+# Run
+cargo audit
+➤ 2.2 Trivy (Container/Docker Scanning)
+# Install
+brew install aquasecurity/trivy/trivy  # macOS
+# or
+sudo apt-get install trivy           # Ubuntu
+
+# Build Docker image
+docker build -t payment-system:latest .
+
+# Scan
+trivy image payment-system:latest
+➤ 2.3 Cargo Deny (License/Advisory Compliance)
+
+# Install
+cargo install cargo-deny
+
+# Configure (create `deny.toml`)
+[certificates]
+[advisories]
+db-path = "~/.cargo/advisory-db"
+[licenses]
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause"]
+deny = ["GPL-3.0"]
+[bans]
+multiple-versions = "deny"
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+
+# Run
+cargo deny check
+
+
+
+🕸️ STEP 3: DISTRIBUTED TRACING TESTS
+Ensure your OpenTelemetry traces propagate correctly across services.
+
+
+
+Load Testing Scripts (k6 for 10K+ TPS simulation)
+✅ Penetration Test Checklist (RBI/NPCI compliance focused)
+✅ Production Monitoring Setup (Prometheus, Grafana, Loki, Jaeger)
+✅ Alerting Configuration (Slack, PagerDuty, SMS)
+✅ Rollback Plan (automated + manual)
+
+
+🚀 STEP 1: LOAD TESTING WITH K6
+➤ 1.1 Install k6
+# macOS
+brew install k6
+
+# Ubuntu
+sudo apt-get update && sudo apt-get install ca-certificates
+curl -fsSL https://get.k6.io | sudo bash
+
+# Windows
+choco install k6
+
+
+➤ 1.2 Load Test Scripts
+Create load-tests/ directory:
+
+load-tests/scenarios.js — User Journey
+
+
+
+
+➤ 1.3 Run Load Tests
+
+
+# Normal load test
+k6 run load-tests/scenarios.js
+
+# Spike test
+k6 run load-tests/spike-test.js
+
+# Distributed load test (multiple machines)
+k6 cloud load-tests/scenarios.js
+
+
+STEP 2: PENETRATION TEST CHECKLIST
+➤ 2.1 Pre-Engagement Checklist
+
+# Penetration Test Pre-Engagement Checklist
+
+## Target Scope
+- [ ] API Gateway (port 3000)
+- [ ] Auth Service (JWT endpoints)
+- [ ] Payment Service (phone/QR payments)
+- [ ] Wallet Service (balance, credit/debit)
+- [ ] Database (PostgreSQL)
+- [ ] Redis Cache
+- [ ] NATS Messaging
+
+## Credentials Provided
+- [ ] Test user credentials (mobile/OTP)
+- [ ] Admin dashboard access (if any)
+- [ ] Database read-only credentials
+- [ ] API documentation (OpenAPI spec)
+
+## Rules of Engagement
+- [ ] No DoS attacks (use load testing separately)
+- [ ] No social engineering
+- [ ] Test window: 02:00-06:00 IST
+- [ ] Emergency contact: security@example.com, +91-9876543210
+
+## Compliance Requirements
+- [ ] RBI PPI Guidelines
+- [ ] NPCI UPI Security Requirements
+- [ ] ISO 27001 Controls
+- [ ] GDPR/Data Protection Act
+
+
+➤ 2.2 Technical Test Cases
+
+# Penetration Test Technical Checklist
+
+## Authentication
+- [ ] JWT token tampering (signature, expiry, claims)
+- [ ] OTP brute force (rate limiting bypass)
+- [ ] Session fixation
+- [ ] Token replay attacks
+
+## Authorization
+- [ ] Horizontal privilege escalation (access other user's wallet)
+- [ ] Vertical privilege escalation (admin access)
+- [ ] IDOR (Insecure Direct Object Reference)
+
+## Payment Flows
+- [ ] Negative amount payments
+- [ ] Integer overflow in amount field
+- [ ] Double spending via race conditions
+- [ ] Idempotency key reuse
+
+## Business Logic
+- [ ] Daily limit bypass
+- [ ] KYC tier downgrade attack
+- [ ] Balance manipulation via concurrent requests
+
+## Infrastructure
+- [ ] Database injection (SQLi)
+- [ ] Server information leakage
+- [ ] Insecure headers (CSP, HSTS, X-Frame-Options)
+- [ ] TLS configuration (SSL Labs A+ rating)
+
+## API Security
+- [ ] Mass assignment attacks
+- [ ] Excessive data exposure
+- [ ] Lack of rate limiting
+- [ ] Insecure CORS configuration
+
+## Post-Exploitation
+- [ ] Data exfiltration simulation
+- [ ] Privilege escalation to admin
+- [ ] Persistence mechanisms
+➤ 2.3 Sample Pen Test Report Template
+
+# Penetration Test Report — Payment System
+
+## Executive Summary
+- **Test Date**: 2025-04-05
+- **Testers**: SecureTest Labs
+- **Critical Findings**: 0
+- **High Findings**: 1 (JWT secret rotation not enforced)
+- **Medium Findings**: 2
+- **Low Findings**: 5
+
+## Critical/High Findings
+
+### 1. JWT Secret Rotation Not Enforced
+- **Risk**: High
+- **Location**: /auth/refresh endpoint
+- **Description**: Old JWT secrets remain valid indefinitely
+- **Recommendation**: Implement key rotation with 2-key support
+- **Status**: Fixed in v1.2.0
+
+## Remediation Timeline
+- Critical: 24 hours
+- High: 72 hours
+- Medium: 7 days
+- Low: 30 days
+
+## Re-test Results
+All critical/high findings remediated and re-verified.
+
+
+
+
+# Manual Rollback Checklist
+
+## Pre-Rollback
+- [ ] Notify all stakeholders (Slack, email)
+- [ ] Pause CI/CD deployments
+- [ ] Take database backup (pg_dump)
+- [ ] Record current version number
+
+## Rollback Steps
+- [ ] Switch load balancer to previous version
+- [ ] Deploy previous container image
+- [ ] Restore database from backup if needed
+- [ ] Clear Redis cache
+- [ ] Restart all services
+
+## Post-Rollback Verification
+- [ ] Verify /health endpoint returns 200
+- [ ] Test core flows (login, balance, payment)
+- [ ] Monitor error rates and latency
+- [ ] Notify stakeholders of successful rollback
+
+## Root Cause Analysis
+- [ ] Document what caused the failure
+- [ ] Create JIRA ticket for fix
+- [ ] Schedule post-mortem meeting
+- [ ] Update runbooks with lessons learned
+
+
+
+# Production Readiness Checklist
+
+## ✅ Testing
+- [ ] Unit tests (100% coverage on critical paths)
+- [ ] Integration tests (full stack with DB/Redis)
+- [ ] Security tests (JWT, rate limiting, SQLi)
+- [ ] Property tests (proptest for edge cases)
+- [ ] Chaos tests (DB crash, Redis down)
+- [ ] Load tests (10K+ TPS with k6)
+- [ ] Mutation tests (cargo-mutants 100% killed)
+
+## ✅ Security
+- [ ] Penetration test completed
+- [ ] CVE scanning (cargo-audit, trivy)
+- [ ] License compliance (cargo-deny)
+- [ ] RBAC implemented
+- [ ] Secrets management (Vault/KMS)
+- [ ] WAF/DDoS protection
+
+## ✅ Monitoring
+- [ ] Prometheus metrics exposed
+- [ ] Grafana dashboards configured
+- [ ] Loki for log aggregation
+- [ ] Jaeger for distributed tracing
+- [ ] Alerting rules configured
+- [ ] PagerDuty/Slack integration
+
+## ✅ Deployment
+- [ ] Blue-green deployment tested
+- [ ] Canary deployment strategy
+- [ ] Automated rollback script
+- [ ] Manual rollback checklist
+- [ ] Disaster recovery plan
+- [ ] Backup/restore tested
+
+## ✅ Compliance
+- [ ] RBI PPI license obtained
+- [ ] NPCI certification
+- [ ] ISO 27001 audit
+- [ ] SOC 2 Type II report
+- [ ] GDPR/Data Protection compliance
+
+🎁 BONUS: PRODUCTION GRADE KUBERNETES MANIFEST

@@ -1,0 +1,38 @@
+groups:
+- name: payment-system-alerts
+  rules:
+  - alert: HighErrorRate
+    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.01
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate ({{ $value }}%)"
+      description: "Payment system error rate is above 1% for 5 minutes"
+
+  - alert: HighLatency
+    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High latency ({{ $value }}s)"
+      description: "95th percentile latency is above 500ms for 5 minutes"
+
+  - alert: LowBalance
+    expr: wallet_balance < 100000  # ₹1,000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low wallet balance for user {{ $labels.user_id }}"
+      description: "Wallet balance is below ₹1,000"
+
+  - alert: FraudAlertsSpiking
+    expr: rate(fraud_alerts_triggered[5m]) > 10
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Fraud alerts spiking ({{ $value }}/min)"
+      description: "More than 10 fraud alerts per minute for 2 minutes"

@@ -1,0 +1,27 @@
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dark {
+  --tw-bg-opacity: 1;
+  background-color: rgb(17 24 39 / var(--tw-bg-opacity));
+  color: white;
+}
+
+.dark .bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(31 41 55 / var(--tw-bg-opacity));
+}
+
+.dark .text-gray-600 {
+  color: rgb(156 163 175);
+}
+
+.dark .border-gray-300 {
+  border-color: rgb(55 65 81);
+}
+
+.dark .bg-gray-50 {
+  background-color: rgb(55 65 81);
+}

@@ -67,6 +67,10 @@ async fn main() {
         .route("/qr/:user_id.png", get(qr::handlers::get_qr_png))
 .route("/qr/:user_id.svg", get(qr::handlers::get_qr_svg))
 .route("/transactions", get(transaction::handlers::get_transactions))
+.route("/contacts", get(contact::handlers::get_contacts))
+.route("/user/profile", get(user::handlers::get_profile))
+
+
 
         // Layer middleware
         .layer(
@@ -82,6 +86,7 @@ async fn main() {
                 .layer(Extension(payment_service))
                 .layer(Extension(std::sync::Arc::new(qr::service::QrService::new())))
                 .layer(Extension(Arc::new(TransactionService::new(pool.clone()))))
+                .layer(Extension(Arc::new(ContactService::new(pool.clone()))))
         )
 
         // JWT middleware for protected routes
@@ -99,6 +104,37 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
+
+        //ws server
+        // Add to main.rs
+let ws_server = Arc::new(WsServer::new());
+let ws_server_clone = ws_server.clone();
+
+// Start WebSocket server
+tokio::spawn(async move {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3003").await.unwrap();
+    println!("WebSocket server listening on ws://localhost:3003");
+
+    loop {
+        let (stream, _) = listener.accept().await.unwrap();
+        let ws_server = ws_server_clone.clone();
+        
+        tokio::spawn(async move {
+            let user_id = "user123".to_string(); // In real app: authenticate via JWT in URL param
+            let ws_stream = tokio_tungstenite::accept_async(stream).await.unwrap();
+            ws_server.handle_connection(user_id, ws_stream).await;
+        });
+    }
+});
+
+// After payment success, send notification
+// In payment/service.rs, after tx.commit():
+let notification = format!(
+    r#"{{"type":"payment","tx_id":"{}","amount":{},"status":"Success"}}"#,
+    tx_id, req.amount
+);
+ws_server.send_notification(&from_user_id.to_string(), &notification).await;
 }
 
 async fn health() -> &'static str {

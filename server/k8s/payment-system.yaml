@@ -1,0 +1,44 @@
+# k8s/payment-system.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-system
+  annotations:
+    version: "v1.2.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-system
+  template:
+    meta
+      labels:
+        app: payment-system
+    spec:
+      containers:
+      - name: payment-system
+        image: payment-system:v1.2.0
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: payment-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"

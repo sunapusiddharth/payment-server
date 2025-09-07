@@ -64,3 +64,26 @@ tracing = "0.1"
 uuid = { version = "1.6", features = ["v4"] }
 
 
+
+
+#real time notificatons
+tokio-tungstenite = "0.20"
+futures-util = "0.3"
+
+
+
+#biometric login
+webauthn-rs = "0.4"
+
+
+[dev-dependencies]
+tokio = { version = "1.3", features = ["rt-multi-thread", "macros"] }
+mockall = "0.11"
+hyper = "0.14"
+tower = "0.4"
+proptest = "1.3"
+criterion = "0.5"
+
+[[bench]]
+name = "payment_benchmark"
+harness = false

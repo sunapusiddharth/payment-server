@@ -110,6 +110,11 @@ impl PaymentService {
 
         // Step 10: Commit
         tx.commit().await?;
+        let notification = format!(
+    r#"{{"type":"payment","tx_id":"{}","amount":{},"status":"Success"}}"#,
+    tx_id, req.amount
+);
+ws_server.send_notification(&from_user_id.to_string(), &notification).await;
 
         // Step 11: Emit fraud event (async, fire-and-forget)
         let event = FraudEvent {
@@ -200,6 +205,11 @@ impl PaymentService {
         .await?;
         self.update_daily_limit(&mut tx, from_user_id, req.amount).await?;
         tx.commit().await?;
+        let notification = format!(
+    r#"{{"type":"payment","tx_id":"{}","amount":{},"status":"Success"}}"#,
+    tx_id, req.amount
+);
+ws_server.send_notification(&from_user_id.to_string(), &notification).await;
 
         let event = FraudEvent {
             tx_id,
